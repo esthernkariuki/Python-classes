@@ -1,4 +1,5 @@
 from datetime import datetime
+
 class Transaction:
     def __init__(self, narration, amount, transaction_type):
         self.date_time = datetime.now()
@@ -21,32 +22,34 @@ class Account:
     def deposit(self, amount, narration="Deposit"):
         if self.__is_frozen:
             return "Account is frozen. Cannot deposit any amount."
-        if amount <= 0:
+        elif amount <= 0:
             return "Deposit amount must be positive."
-        self.__transactions.append(Transaction(narration, amount, "deposit"))
-        return f"Deposit successful. New balance: {self.get_balance():.2f}"
+        else:
+            self.__transactions.append(Transaction(narration, amount, "deposit"))
+            return f"Deposit successful. New balance: {self.get_balance():.2f}"
 
     def withdraw(self, amount, narration="Withdrawal"):
         if self.__is_frozen:
             return "Account is frozen. Cannot withdraw any amount."
-        if amount <= 0:
+        elif amount <= 0:
             return "Withdrawal amount must be positive."
-        if self.get_balance() - amount < self.__minimum_balance:
+        elif self.get_balance() - amount < self.__minimum_balance:
             return f"Insufficient funds or below minimum balance ({self.__minimum_balance:.2f})."
-        self.__transactions.append(Transaction(narration, amount, "withdrawal"))
-        return f"Withdrawal successful. New balance: {self.get_balance():.2f}"
-    
+        else:
+            self.__transactions.append(Transaction(narration, amount, "withdrawal"))
+            return f"Withdrawal successful. New balance: {self.get_balance():.2f}"
 
     def transfer(self, target_account, amount, narration="Transfer"):
         if self.__is_frozen:
             return "Account is frozen. Cannot transfer any amount."
-        if amount <= 0:
+        elif amount <= 0:
             return "Transfer amount must be positive."
-        if self.get_balance() - amount < self.__minimum_balance:
+        elif self.get_balance() - amount < self.__minimum_balance:
             return f"Insufficient funds or below minimum balance ({self.__minimum_balance:.2f})."
-        self.__transactions.append(Transaction(narration, amount, "transfer out"))
-        target_account.deposit(amount, f"Transfer from {self.__account_number}")
-        return f"Transfer successful. New balance: {self.get_balance():.2f}"
+        else:
+            self.__transactions.append(Transaction(narration, amount, "transfer out"))
+            target_account.deposit(amount, f"Transfer from {self.__account_number}")
+            return f"Transfer successful. New balance: {self.get_balance():.2f}"
 
     def get_balance(self):
         balance = 0.0
@@ -57,23 +60,25 @@ class Account:
     def request_loan(self, amount):
         if self.__is_frozen:
             return "Account is frozen. Cannot request loan."
-        if amount <= 0:
+        elif amount <= 0:
             return "Loan amount must be positive."
-        self.__loan_amount += amount
-        self.__transactions.append(Transaction("Loan granted", amount, "loan"))
-        return f"Loan of {amount:.2f} granted. Outstanding loan: {self.__loan_amount:.2f}"
+        else:
+            self.__loan_amount += amount
+            self.__transactions.append(Transaction("Loan granted", amount, "loan"))
+            return f"Loan of {amount:.2f} granted. Outstanding loan: {self.__loan_amount:.2f}"
 
     def repay_loan(self, amount):
         if self.__is_frozen:
             return "Account is frozen. Cannot repay loan."
-        if amount <= 0:
+        elif amount <= 0:
             return "Repayment amount must be positive."
-        if self.__loan_amount == 0:
+        elif self.__loan_amount == 0:
             return "No outstanding loan."
-        repay_amount = min(amount, self.__loan_amount)
-        self.__loan_amount -= repay_amount
-        self.__transactions.append(Transaction("Loan repayment", repay_amount, "loan_repayment"))
-        return f"Loan repaid: {repay_amount:.2f}. Remaining loan: {self.__loan_amount:.2f}"
+        else:
+            repay_amount = min(amount, self.__loan_amount)
+            self.__loan_amount -= repay_amount
+            self.__transactions.append(Transaction("Loan repayment", repay_amount, "loan_repayment"))
+            return f"Loan repaid: {repay_amount:.2f}. Remaining loan: {self.__loan_amount:.2f}"
 
     def view_account_details(self):
         return (f"Owner: {self.__owner}\n"
@@ -96,12 +101,12 @@ class Account:
     def interest_calculation(self, rate=0.05):
         if self.__is_frozen:
             return "Account is frozen. Cannot apply interest."
-        balance = self.get_balance()
-        if balance > 0:
-            interest = balance * rate
+        elif self.get_balance() > 0:
+            interest = self.get_balance() * rate
             self.__transactions.append(Transaction("Interest", interest, "interest"))
             return f"Interest of {interest:.2f} applied. New balance: {self.get_balance():.2f}"
-        return "No positive balance to apply interest."
+        else:
+            return "No positive balance to apply interest."
 
     def freeze_account(self):
         self.__is_frozen = True
@@ -114,16 +119,18 @@ class Account:
     def set_minimum_balance(self, amount):
         if amount < 0:
             return "Minimum balance must be non-negative."
-        self.__minimum_balance = amount
-        return f"Minimum balance set to {self.__minimum_balance:.2f}"
+        else:
+            self.__minimum_balance = amount
+            return f"Minimum balance set to {self.__minimum_balance:.2f}"
 
     def close_account(self):
         if self.__is_frozen:
             return "Account is frozen. Unfreeze to close."
-        self.__transactions.clear()
-        self.__loan_amount = 0.0
-        return f"{self.__owner}Account {self.__account_number} closed. All balances and transactions cleared."
-    
+        else:
+            self.__transactions.clear()
+            self.__loan_amount = 0.0
+            return f"{self.__owner}Account {self.__account_number} closed. All balances and transactions cleared."
+
 
 if __name__ == "__main__":
     account1 = Account("Wamai", "08973")
