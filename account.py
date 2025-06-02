@@ -1,105 +1,145 @@
+from datetime import datetime
+class Transaction:
+    def __init__(self, narration, amount, transaction_type):
+        self.date_time = datetime.now()
+        self.narration = narration
+        self.amount = amount
+        self.transaction_type = transaction_type
+
+    def __str__(self):
+        return f"{self.date_time.strftime('%Y-%m-%d %H:%M:%S')} {self.transaction_type.capitalize()}  {self.narration}  {self.amount:.2f}"
+
 class Account:
-    def __init__(self,name,number):
-        self.name=name
-        self.number=number
-        self.balance=0
-        self.deposits=[]
-        self.withdraws=[]
-        self.is_frozen=False
-        self.minimum_balance=0
+    def __init__(self, owner, account_number):
+        self.__owner = owner
+        self.__account_number = account_number
+        self.__transactions = []
+        self.__is_frozen = False
+        self.__minimum_balance = 0
+        self.__loan_amount = 0.0
 
+    def deposit(self, amount, narration="Deposit"):
+        if self.__is_frozen:
+            return "Account is frozen. Cannot deposit any amount."
+        if amount <= 0:
+            return "Deposit amount must be positive."
+        self.__transactions.append(Transaction(narration, amount, "deposit"))
+        return f"Deposit successful. New balance: {self.get_balance():.2f}"
 
-# Deposit: method to deposit funds, store the deposit and return a message with the new balance to the customer. It should only accept positive amounts.
+    def withdraw(self, amount, narration="Withdrawal"):
+        if self.__is_frozen:
+            return "Account is frozen. Cannot withdraw any amount."
+        if amount <= 0:
+            return "Withdrawal amount must be positive."
+        if self.get_balance() - amount < self.__minimum_balance:
+            return f"Insufficient funds or below minimum balance ({self.__minimum_balance:.2f})."
+        self.__transactions.append(Transaction(narration, amount, "withdrawal"))
+        return f"Withdrawal successful. New balance: {self.get_balance():.2f}"
+    
 
-    def deposit(self,amount):
-        if amount<=0:
-            return f"{self.name} your deposit is must be positive number"
-        self.balance += amount
-        self.deposits.append(amount)
-        return f"Hello {self.name} you have deposited {amount} your balance is {self.balance}"
-        
+    def transfer(self, target_account, amount, narration="Transfer"):
+        if self.__is_frozen:
+            return "Account is frozen. Cannot transfer any amount."
+        if amount <= 0:
+            return "Transfer amount must be positive."
+        if self.get_balance() - amount < self.__minimum_balance:
+            return f"Insufficient funds or below minimum balance ({self.__minimum_balance:.2f})."
+        self.__transactions.append(Transaction(narration, amount, "transfer out"))
+        target_account.deposit(amount, f"Transfer from {self.__account_number}")
+        return f"Transfer successful. New balance: {self.get_balance():.2f}"
 
-# Withdraw: method to withdraw funds, store the withdrawal and return a message with the new balance to the customer. An account cannot be overdrawn.
-    def withdraw_amount(self,amount):
-        if amount<=0:
-            return f"{self.name} your balance is negative number"
-        if amount > self.balance:
-            return f"{self.name} have insufficient balance.Your balance is {self.balance} top up your account and try again"
-        self.balance -= amount
-        self.withdraws.append(amount)
-        return f"Hello {self.name} you have withdrawn {amount} your balance is {self.balance}"
-
-# Transfer Funds: Method to transfer funds from one account to an instance of another account.
-
-    def transfer_amount(self,amount):
-        if amount<=0:
-            return f"{self.name} your balance is negative number"
-        if amount >self.balance:
-            return f"{self.name} have insufficient balance.Your balance is {self.balance} top up your account and try again"
-        self.balance-=amount
-        self.withdraws.append(amount)
-        return f" Confirmed {self.name} have successfull send {amount} to {self.number} your new balance is {self.balance}"
-
-
-# Get Balance: Method to calculate an account balance from deposits and withdrawals.
     def get_balance(self):
-        return f"Your account balance is {self.balance}"
+        balance = 0.0
+        for transaction in self.__transactions:
+            balance += transaction.amount
+        return balance
 
-# Request Loan: Method to request a loan amount.
-    def request_loan(self,amount):
-         if amount<=0:
-            return f"{self.name} your balance is negative number"
-         self.balance += amount
-         return f"{self.name} you have received loan amount {amount},your new balance is {self.balance}"
-    
-# Repay Loan: Method to repay a loan with a given amount.
-    def repay_loan(self,amount):
-        if amount<=0:
-             return f"{self.name} your balance is negative number"
-        self.balance-=amount
-        return f"{self.name} you have repayed {amount} your account balance is {self.balance}"
-# View Account Details: Method to display the account owner's details and current balance.
+    def request_loan(self, amount):
+        if self.__is_frozen:
+            return "Account is frozen. Cannot request loan."
+        if amount <= 0:
+            return "Loan amount must be positive."
+        self.__loan_amount += amount
+        self.__transactions.append(Transaction("Loan granted", amount, "loan"))
+        return f"Loan of {amount:.2f} granted. Outstanding loan: {self.__loan_amount:.2f}"
+
+    def repay_loan(self, amount):
+        if self.__is_frozen:
+            return "Account is frozen. Cannot repay loan."
+        if amount <= 0:
+            return "Repayment amount must be positive."
+        if self.__loan_amount == 0:
+            return "No outstanding loan."
+        repay_amount = min(amount, self.__loan_amount)
+        self.__loan_amount -= repay_amount
+        self.__transactions.append(Transaction("Loan repayment", repay_amount, "loan_repayment"))
+        return f"Loan repaid: {repay_amount:.2f}. Remaining loan: {self.__loan_amount:.2f}"
+
     def view_account_details(self):
-        return f"{self.name} your balance is {self.balance}"
-             
-# Change Account Owner: Method to update the account owner's name.
-    def change_account_owner(self,new_name):
-        self.name=new_name
-        return f"Hello,{self.name}"
-# Account Statement: Method to generate a statement of all transactions in an account. (Print using a for loop).
-    def statement(self):
-        print(f"Statement for {self.name}:")
-        print("Deposits:")
-        for deposit in self.deposits:
-            print(f"{deposit}")
-        print("Withdrawals:")
-        for withdraw in self.withdraws:
-            print(f"{withdraw}")
-# Interest Calculation: Method to calculate and apply an interest to the balance. Use 5% interest. 
-    def interest_calculation(self):
-        interest=self.balance *0.05
-        self.balance+=interest
-        return f"{self.name} your interest is {self.balance}"
+        return (f"Owner: {self.__owner}\n"
+                f"Account number: {self.__account_number}\n"
+                f"Balance: {self.get_balance():.2f}\n"
+                f"Minimum balance: {self.__minimum_balance:.2f}\n"
+                f"Outstanding loan: {self.__loan_amount:.2f}\n"
+                f"Status: {'Frozen' if self.__is_frozen else 'Active'}")
 
-# Freeze/Unfreeze Account: Methods to freeze and unfreeze the account for security reasons.
-    def freeze(self):
-        self.is_frozen=True
-        return f"{self.name} account and can't deposit or withdraw"
-    
-    def unfreeze(self):
-        self.is_frozen=False
-        return f"{self.name} account is unfrozen you can now deposit or withdraw"
+    def change_account_owner(self, new_owner):
+        self.__owner = new_owner
+        return f"Account owner changed to {self.__owner}"
 
+    def account_statement(self):
+        print(f"Statement for {self.__owner} ({self.__account_number}):")
+        for t in self.__transactions:
+            print(t)
+        print(f"Current balance: {self.get_balance():.2f}")
 
-# Set Minimum Balance: Method to enforce a minimum balance requirement. You cannot withdraw if your balance is less than this amount
-    def minimum_balance(self,amount):    
+    def interest_calculation(self, rate=0.05):
+        if self.__is_frozen:
+            return "Account is frozen. Cannot apply interest."
+        balance = self.get_balance()
+        if balance > 0:
+            interest = balance * rate
+            self.__transactions.append(Transaction("Interest", interest, "interest"))
+            return f"Interest of {interest:.2f} applied. New balance: {self.get_balance():.2f}"
+        return "No positive balance to apply interest."
+
+    def freeze_account(self):
+        self.__is_frozen = True
+        return "Account frozen."
+
+    def unfreeze_account(self):
+        self.__is_frozen = False
+        return "Account unfrozen."
+
+    def set_minimum_balance(self, amount):
         if amount < 0:
-            return "Minimum balance cannot be negative."
-        self.minimum_balance = amount
-        return f"Minimum balance set to {self.minimum_balance}"
-# Close Account: Method to close the account and set all balances to zero and empty all transactions
+            return "Minimum balance must be non-negative."
+        self.__minimum_balance = amount
+        return f"Minimum balance set to {self.__minimum_balance:.2f}"
+
     def close_account(self):
-        self.balance = 0
-        self.deposits = []
-        self.withdraws = []
-        return f"{self.name} your account has been closed."
+        if self.__is_frozen:
+            return "Account is frozen. Unfreeze to close."
+        self.__transactions.clear()
+        self.__loan_amount = 0.0
+        return f"{self.__owner}Account {self.__account_number} closed. All balances and transactions cleared."
+    
+
+if __name__ == "__main__":
+    account1 = Account("Wamai", "08973")
+    account2 = Account("Wanjiru", "42673")
+    print(account1.deposit(1500))
+    print(account2.deposit(500))
+    print(account1.withdraw(300))
+    print(account1.transfer(account2, 100))
+    print(account1.request_loan(1200))
+    print(account1.repay_loan(1000))
+    print(account1.repay_loan(800))
+    print(account1.view_account_details())
+    account1.account_statement()
+    print(account1.freeze_account())
+    print(account1.deposit(200))
+    print(account1.unfreeze_account())
+    print(account1.deposit(200))
+    print(account1.set_minimum_balance(50))
+    print(account1.close_account())
